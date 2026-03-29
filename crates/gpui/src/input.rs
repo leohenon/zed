@@ -75,6 +75,24 @@ pub trait EntityInputHandler: 'static + Sized {
     fn accepts_text_input(&self, _window: &mut Window, _cx: &mut Context<Self>) -> bool {
         true
     }
+
+    /// See [`InputHandler::apple_press_and_hold_enabled`] for details
+    fn apple_press_and_hold_enabled(
+        &mut self,
+        _window: &mut Window,
+        _cx: &mut Context<Self>,
+    ) -> bool {
+        true
+    }
+
+    /// See [`InputHandler::prefers_ime_for_printable_keys`] for details
+    fn prefers_ime_for_printable_keys(
+        &mut self,
+        _window: &mut Window,
+        _cx: &mut Context<Self>,
+    ) -> bool {
+        false
+    }
 }
 
 /// The canonical implementation of [`crate::PlatformInputHandler`]. Call [`Window::handle_input`]
@@ -82,6 +100,7 @@ pub trait EntityInputHandler: 'static + Sized {
 pub struct ElementInputHandler<V> {
     view: Entity<V>,
     element_bounds: Bounds<Pixels>,
+    apple_press_and_hold_enabled: bool,
 }
 
 impl<V: 'static> ElementInputHandler<V> {
@@ -92,7 +111,14 @@ impl<V: 'static> ElementInputHandler<V> {
         ElementInputHandler {
             view,
             element_bounds,
+            apple_press_and_hold_enabled: true,
         }
+    }
+
+    /// Controls whether Apple press-and-hold behavior is enabled for this input handler.
+    pub fn apple_press_and_hold_enabled(mut self, enabled: bool) -> Self {
+        self.apple_press_and_hold_enabled = enabled;
+        self
     }
 }
 
@@ -188,8 +214,13 @@ impl<V: EntityInputHandler> InputHandler for ElementInputHandler<V> {
             .update(cx, |view, cx| view.accepts_text_input(window, cx))
     }
 
+    fn apple_press_and_hold_enabled(&mut self) -> bool {
+        self.apple_press_and_hold_enabled
+    }
+
     fn prefers_ime_for_printable_keys(&mut self, window: &mut Window, cx: &mut App) -> bool {
-        self.view
-            .update(cx, |view, cx| view.accepts_text_input(window, cx))
+        self.view.update(cx, |view, cx| {
+            view.prefers_ime_for_printable_keys(window, cx)
+        })
     }
 }
