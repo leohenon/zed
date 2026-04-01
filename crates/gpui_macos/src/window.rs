@@ -1862,16 +1862,6 @@ extern "C" fn handle_key_event(this: &Object, native_event: id, key_equivalent: 
 
             drop(lock);
 
-            if key_down_event.keystroke.modifiers.control
-                && !key_down_event.keystroke.modifiers.alt
-                && !key_down_event.keystroke.modifiers.platform
-                && !key_down_event.keystroke.modifiers.function
-                && key_down_event.keystroke.key == "l"
-            {
-                let handled = run_callback(PlatformInput::KeyDown(key_down_event));
-                return handled;
-            }
-
             let is_composing =
                 with_input_handler(this, |input_handler| input_handler.marked_text_range())
                     .flatten()
